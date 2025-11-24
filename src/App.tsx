@@ -24,10 +24,6 @@ type CategoryId = "session" | "standard" | "stock" | "party" | "membership";
 
 type ChannelMap = { pos: boolean; online: boolean; ssk: boolean; api: boolean };
 
-type EarnOverrides = Record<CategoryId, number>; // %+/- vs base earn
-
-type MultiplierMap = Record<CategoryId, number>; // × points per category
-
 interface BasicsConfig {
   name: string;
   venues: string[];
@@ -44,7 +40,6 @@ interface EarnConfig {
   earnOnTax: boolean;
   minSpend: number;
   channels: ChannelMap;
-  itemOverrides: EarnOverrides;
   caps: { perTxn: number; perDay: number };
   excludeTenders: string[];
   welcome: WelcomeBonusConfig; // on join, no spend threshold
@@ -53,7 +48,6 @@ interface EarnConfig {
 interface RedeemConfig {
   mode: "priceForPoints";
   increment: number; // redemption rounding in points
-  multipliers: MultiplierMap;
   exclusions: string[];
   offPeakOnly: boolean;
 }
@@ -164,7 +158,6 @@ export default function RollerLoyaltyWizard(): JSX.Element {
       earnOnTax: false,
       minSpend: 5,
       channels: { pos: true, online: true, ssk: true, api: true },
-      itemOverrides: { session: 0, standard: 0, stock: -50, party: 0, membership: 0 },
       caps: { perTxn: 5000, perDay: 15000 },
       excludeTenders: ["Gift cards", "Store credit"],
       welcome: { enabled: true, bonusPoints: 1000 },
@@ -172,7 +165,6 @@ export default function RollerLoyaltyWizard(): JSX.Element {
     redeem: {
       mode: "priceForPoints",
       increment: 10,
-      multipliers: { session: 0.6, standard: 0.6, stock: 1.5, party: 1.0, membership: 1.0 },
       exclusions: ["Gift cards", "3rd‑party vouchers"],
       offPeakOnly: false,
     },
@@ -303,12 +295,10 @@ function ProgramRules({ cfg, setCfg }: PaneProps): JSX.Element {
   const [minSpend, setMinSpend] = useState<number>(cfg.earn.minSpend);
   const [caps, setCaps] = useState<{ perTxn: number; perDay: number }>(cfg.earn.caps);
   const [channels, setChannels] = useState<ChannelMap>(cfg.earn.channels);
-  const [overrides, setOverrides] = useState<EarnOverrides>(cfg.earn.itemOverrides);
   const [wel, setWel] = useState<WelcomeBonusConfig>(cfg.earn.welcome);
 
   // Redeem
   const [increment, setIncrement] = useState<number>(cfg.redeem.increment);
-  const [mx, setMx] = useState<MultiplierMap>(cfg.redeem.multipliers);
 
   // Expiry
   const [months, setMonths] = useState<number>(cfg.expiry.months);
@@ -365,19 +355,6 @@ function ProgramRules({ cfg, setCfg }: PaneProps): JSX.Element {
           </div>
         </div>
         <Divider />
-        <div>
-          <h3 className="font-medium mb-2 text-gray-800">Category‑level overrides (earn % vs base)</h3>
-          <div className="grid md:grid-cols-3 gap-3">
-            {Object.entries(overrides).map(([k, v]) => (
-              <div key={k} className="bg-white p-3 rounded-lg border border-gray-200">
-                <div className="text-xs text-gray-500 mb-1">{MOCK_CATEGORIES.find(c => c.id === (k as CategoryId))?.name || k}</div>
-                <RLInput type="number" value={v} onChange={(e) => setOverrides({ ...overrides, [k as CategoryId]: parseInt(e.target.value || "0", 10) })} />
-                <div className="text-[11px] text-gray-500 mt-1">e.g., -50 means half the base earn</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <Divider />
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium text-gray-800">Welcome bonus (on join)</div>
           <Switch checked={wel.enabled} onCheckedChange={(v) => setWel({ ...wel, enabled: v })} />
@@ -397,7 +374,7 @@ function ProgramRules({ cfg, setCfg }: PaneProps): JSX.Element {
           <div className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">Redemption</div>
           <span className="text-[12px] text-indigo-700">How points are spent & when they expire</span>
         </div>
-        <p className="text-xs text-gray-600 mb-3">Choose redemption blocks, enable split tender, tune category multipliers, and set rolling expiry.</p>
+        <p className="text-xs text-gray-600 mb-3">Choose redemption blocks, enable split tender, and set rolling expiry.</p>
         <Row>
           <div>
             <RLLabel>Redemption increment (pts)</RLLabel>
@@ -405,19 +382,6 @@ function ProgramRules({ cfg, setCfg }: PaneProps): JSX.Element {
             <div className="text-[11px] text-gray-500 mt-1">Each {increment} pts ≈ ${(increment * cfg.basics.pointValue).toFixed(2)} credit</div>
           </div>
         </Row>
-        <Divider />
-        <div>
-          <h3 className="font-medium mb-2 text-gray-800">Category multipliers (× points)</h3>
-          <div className="grid md:grid-cols-3 gap-3">
-            {Object.entries(mx).map(([k, v]) => (
-              <div key={k} className="bg-white p-3 rounded-lg border border-gray-200">
-                <div className="text-xs text-gray-500 mb-1">{MOCK_CATEGORIES.find(c => c.id === (k as CategoryId))?.name || k}</div>
-                <RLInput type="number" step={0.1} value={v} onChange={(e) => setMx({ ...mx, [k as CategoryId]: parseFloat(e.target.value || "0") })} />
-                <div className="text-[11px] text-gray-500 mt-1">0.6× = cheaper in points; 1.5× = pricier</div>
-              </div>
-            ))}
-          </div>
-        </div>
         <Divider />
         <div className="grid md:grid-cols-2 gap-3">
           <div>
@@ -445,15 +409,15 @@ function ProgramRules({ cfg, setCfg }: PaneProps): JSX.Element {
           </div>
         </Row>
         <div className="text-sm text-gray-700 mt-3">Estimated program cost ≈ <b>{estProgramCostPct.toFixed(1)}%</b> of sales (based on points per $ and $/pt).
-          <div className="text-xs text-gray-600">Note: This is a budgeting aid. Actuals vary with category multipliers, exclusions, increments, and guest behavior.</div>
+          <div className="text-xs text-gray-600">Note: This is a budgeting aid. Actuals vary with exclusions, increments, and guest behavior.</div>
         </div>
       </div>
 
       <Divider />
       <PrimaryButton onClick={() => setCfg((c) => ({
         ...c,
-        earn: { ...c.earn, ptsPerDollar: rate, minSpend, caps, channels, itemOverrides: overrides, welcome: wel },
-        redeem: { ...c.redeem, increment, multipliers: mx },
+        earn: { ...c.earn, ptsPerDollar: rate, minSpend, caps, channels, welcome: wel },
+        redeem: { ...c.redeem, increment },
         expiry: { ...c.expiry, months, graceEmailDays: grace }
       }))}>Save program rules</PrimaryButton>
     </section>
@@ -527,9 +491,8 @@ function Review({ cfg, setPublished }: { cfg: Config; setPublished: Dispatch<Set
   const [agree, setAgree] = useState<boolean>(false);
   const redeemExample = useMemo(() => {
     const price = 15; // $15 session pass
-    const basePts = Math.round((price / cfg.basics.pointValue));
-    const ptsWithMx = Math.round(basePts * cfg.redeem.multipliers.session / cfg.redeem.increment) * cfg.redeem.increment;
-    return { price, basePts, ptsWithMx };
+    const basePts = Math.round((price / cfg.basics.pointValue) / cfg.redeem.increment) * cfg.redeem.increment;
+    return { price, basePts };
   }, [cfg]);
 
   const publish = (): void => setPublished(true);
@@ -541,12 +504,12 @@ function Review({ cfg, setPublished }: { cfg: Config; setPublished: Dispatch<Set
 
       <div className="grid md:grid-cols-2 gap-4">
         <SummaryCard title="Program rules — Earn" lines={[`Base: ${cfg.earn.ptsPerDollar} pts/$`, `Min spend: $${cfg.earn.minSpend}`, `Caps: ${cfg.earn.caps.perTxn.toLocaleString()} / ${cfg.earn.caps.perDay.toLocaleString()} pts`, `Channels: ${Object.entries(cfg.earn.channels).filter(([_,v])=>v).map(([k])=>k).join(", ") || "—"}`, `${cfg.earn.welcome.enabled ? `Welcome bonus: ${cfg.earn.welcome.bonusPoints} pts` : "Welcome bonus: OFF"}`]} />
-        <SummaryCard title="Program rules — Redeem & expiry" lines={[`Point value: $${cfg.basics.pointValue.toFixed(2)}/pt`, `Increment: ${cfg.redeem.increment} pts`, `Multipliers: session ${cfg.redeem.multipliers.session}×, stock ${cfg.redeem.multipliers.stock}×`, `Exclusions: ${cfg.redeem.exclusions.join(", ")}`, `Expiry: ${cfg.expiry.months} months; grace ${cfg.expiry.graceEmailDays} days`]} />
+        <SummaryCard title="Program rules — Redeem & expiry" lines={[`Point value: $${cfg.basics.pointValue.toFixed(2)}/pt`, `Increment: ${cfg.redeem.increment} pts`, `Exclusions: ${cfg.redeem.exclusions.join(", ")}`, `Expiry: ${cfg.expiry.months} months; grace ${cfg.expiry.graceEmailDays} days`]} />
         <SummaryCard title="Eligible items" lines={[cfg.eligibility.scope === "categories" ? `Categories: ${cfg.eligibility.categories.map((c)=>MOCK_CATEGORIES.find(x=>x.id===c)?.name).join(", ")}` : `Products: ${cfg.eligibility.products.length} selected`]} />
       </div>
 
       <div className="mt-4 text-sm text-gray-600">
-        Example: A $15 session pass costs <b>{redeemExample.basePts.toLocaleString()}</b> pts at face value; with a <b>{cfg.redeem.multipliers.session}×</b> session multiplier it becomes <b>{redeemExample.ptsWithMx.toLocaleString()}</b> pts.
+        Example: A $15 session pass costs <b>{redeemExample.basePts.toLocaleString()}</b> pts.
       </div>
 
       <Divider />
