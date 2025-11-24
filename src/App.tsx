@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
  *  - Program rules (Earning, Redemption, Expiry) + Program Cost Estimator
  *  - Eligible items (incl. exclusions)
  *  - Review & publish
+ * 
+ * Updated: Removed category-level overrides and multipliers
  */
 
 // ---------- Types ---------- //
