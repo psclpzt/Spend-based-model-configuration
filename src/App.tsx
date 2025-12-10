@@ -217,10 +217,10 @@ export default function App(): JSX.Element {
           </CardContent>
         </Card>
 
-        {/* Program rules */}
+        {/* Earning rules */}
         <Card className="mb-6 rounded border border-gray-300 bg-white">
           <CardContent className="p-5 md:p-6">
-            <h2 className="text-base font-semibold mb-3 m-0">Program rules</h2>
+            <h2 className="text-base font-semibold mb-3 m-0">Earning rules</h2>
 
             <div className="mb-4">
               <Label className="text-[13px] mb-2 block">How guests earn points</Label>
@@ -230,7 +230,7 @@ export default function App(): JSX.Element {
                   type="number"
                   min={0}
                   step={0.1}
-                  className="rounded border-gray-300 text-[13px] px-2 py-1.5 h-auto w-20"
+                  className="rounded border-gray-300 text-[13px] px-2 py-1.5 h-auto w-12"
                   value={pointsPerDollar}
                   onChange={(e) => setPointsPerDollar(parseFloat(e.target.value) || 0)}
                 />
@@ -254,114 +254,129 @@ export default function App(): JSX.Element {
                 </div>
               </label>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Advanced earning settings */}
-        <Card className="mb-6 rounded border border-gray-300 bg-white">
-          <CardContent className="p-5 md:p-6">
-            <button
-              type="button"
-              onClick={() => setShowAdvancedEarning(!showAdvancedEarning)}
-              className="w-full flex items-center justify-between text-base font-semibold mb-0"
-            >
-              <h2 className="m-0">Advanced earning settings</h2>
-              <span className="text-gray-500">{showAdvancedEarning ? "▼" : "▶"}</span>
-            </button>
-
-            {showAdvancedEarning && (
-              <div className="mt-4 space-y-4">
+            <div className="mb-4">
+              <label className="flex items-start gap-2 text-[13px] text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={minimumSpendRequired}
+                  onChange={(e) => setMinimumSpendRequired(e.target.checked)}
+                  className="mt-1"
+                />
                 <div>
-                  <Label className="text-[13px] mb-2 block">
-                    Eligible products
-                  </Label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Choose which products the earning applies to.
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2 text-[13px]">
-                      <input
-                        type="radio"
-                        name="eligible-products"
-                        checked={eligibleProductsScope === "all"}
-                        onChange={() => setEligibleProductsScope("all")}
-                      />
-                      All products
-                    </label>
-                    <label className="flex items-center gap-2 text-[13px]">
-                      <input
-                        type="radio"
-                        name="eligible-products"
-                        checked={eligibleProductsScope === "selected"}
-                        onChange={() => setEligibleProductsScope("selected")}
-                      />
-                      Selected products
-                    </label>
+                  <span className="font-medium">Minimum spend</span>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Guests must meet this minimum spend before they can redeem points.
                   </div>
                 </div>
+              </label>
+            </div>
 
-                <div>
-                  <Label className="text-[13px] mb-2 block">
-                    Category multipliers
-                  </Label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Set custom earning rates for specific product categories.
-                  </p>
-                  {categoryMultipliers.length > 0 && (
-                    <div className="mb-3 border border-gray-200 rounded">
-                      <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 border-b border-gray-200 text-[13px] font-medium">
-                        <div>Category</div>
-                        <div>Points per $1 spend</div>
-                      </div>
-                      {categoryMultipliers.map((multiplier) => (
-                        <div
-                          key={multiplier.id}
-                          className="grid grid-cols-2 gap-4 p-3 border-b border-gray-200 last:border-b-0 items-center"
-                        >
-                          <Input
-                            className="rounded border-gray-300 text-[13px] px-2 py-1.5 h-auto"
-                            value={multiplier.category}
-                            onChange={(e) =>
-                              updateCategoryMultiplier(multiplier.id, "category", e.target.value)
-                            }
-                            placeholder="Entered text"
-                          />
-                          <div className="flex items-center gap-2">
+            {/* Advanced earning settings - collapsible sub-section */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedEarning(!showAdvancedEarning)}
+                className="w-full flex items-center justify-between text-sm font-semibold mb-0"
+              >
+                <span>Advanced earning settings</span>
+                <span className="text-gray-500">{showAdvancedEarning ? "▼" : "▶"}</span>
+              </button>
+
+              {showAdvancedEarning && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <Label className="text-[13px] mb-2 block">
+                      Eligible products
+                    </Label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Choose which products the earning applies to.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-[13px]">
+                        <input
+                          type="radio"
+                          name="eligible-products"
+                          checked={eligibleProductsScope === "all"}
+                          onChange={() => setEligibleProductsScope("all")}
+                        />
+                        All products
+                      </label>
+                      <label className="flex items-center gap-2 text-[13px]">
+                        <input
+                          type="radio"
+                          name="eligible-products"
+                          checked={eligibleProductsScope === "selected"}
+                          onChange={() => setEligibleProductsScope("selected")}
+                        />
+                        Selected products
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-[13px] mb-2 block">
+                      Category multipliers
+                    </Label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Set custom earning rates for specific product categories.
+                    </p>
+                    {categoryMultipliers.length > 0 && (
+                      <div className="mb-3 border border-gray-200 rounded">
+                        <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 border-b border-gray-200 text-[13px] font-medium">
+                          <div>Category</div>
+                          <div>Points per $1 spend</div>
+                        </div>
+                        {categoryMultipliers.map((multiplier) => (
+                          <div
+                            key={multiplier.id}
+                            className="grid grid-cols-2 gap-4 p-3 border-b border-gray-200 last:border-b-0 items-center"
+                          >
                             <Input
-                              type="number"
-                              className="rounded border-gray-300 text-[13px] px-2 py-1.5 h-auto flex-1"
-                              value={multiplier.pointsPerDollar}
+                              className="rounded border-gray-300 text-[13px] px-2 py-1.5 h-auto"
+                              value={multiplier.category}
                               onChange={(e) =>
-                                updateCategoryMultiplier(
-                                  multiplier.id,
-                                  "pointsPerDollar",
-                                  parseFloat(e.target.value) || 0
-                                )
+                                updateCategoryMultiplier(multiplier.id, "category", e.target.value)
                               }
                               placeholder="Entered text"
                             />
-                            <button
-                              type="button"
-                              onClick={() => removeCategoryMultiplier(multiplier.id)}
-                              className="text-gray-500 hover:text-red-600"
-                            >
-                              🗑️
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                className="rounded border-gray-300 text-[13px] px-2 py-1.5 h-auto flex-1"
+                                value={multiplier.pointsPerDollar}
+                                onChange={(e) =>
+                                  updateCategoryMultiplier(
+                                    multiplier.id,
+                                    "pointsPerDollar",
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                placeholder="Entered text"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeCategoryMultiplier(multiplier.id)}
+                                className="text-gray-500 hover:text-red-600"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <Button
-                    variant="outline"
-                    className="rounded text-xs px-2.5 py-1 border-gray-300"
-                    onClick={addCategoryMultiplier}
-                  >
-                    Add category
-                  </Button>
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="rounded text-xs px-2.5 py-1 border-gray-300"
+                      onClick={addCategoryMultiplier}
+                    >
+                      Add category
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -427,39 +442,19 @@ export default function App(): JSX.Element {
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="flex items-start gap-2 text-[13px] text-gray-900">
-                <input
-                  type="checkbox"
-                  checked={minimumSpendRequired}
-                  onChange={(e) => setMinimumSpendRequired(e.target.checked)}
-                  className="mt-1"
-                />
-                <div>
-                  <span className="font-medium">Minimum spend</span>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    Guests must meet this minimum spend before they can redeem points.
-                  </div>
-                </div>
-              </label>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Advanced redemption settings - collapsible sub-section */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedRedemption(!showAdvancedRedemption)}
+                className="w-full flex items-center justify-between text-sm font-semibold mb-0"
+              >
+                <span>Advanced redemption settings</span>
+                <span className="text-gray-500">{showAdvancedRedemption ? "▼" : "▶"}</span>
+              </button>
 
-        {/* Advanced redemption settings */}
-        <Card className="mb-6 rounded border border-gray-300 bg-white">
-          <CardContent className="p-5 md:p-6">
-            <button
-              type="button"
-              onClick={() => setShowAdvancedRedemption(!showAdvancedRedemption)}
-              className="w-full flex items-center justify-between text-base font-semibold mb-0"
-            >
-              <h2 className="m-0">Advanced redemption settings</h2>
-              <span className="text-gray-500">{showAdvancedRedemption ? "▼" : "▶"}</span>
-            </button>
-
-            {showAdvancedRedemption && (
-              <div className="mt-4 space-y-4">
+              {showAdvancedRedemption && (
+                <div className="mt-4 space-y-4">
                 <div>
                   <Label className="text-[13px] mb-2 block">Excluded products</Label>
                   <p className="text-xs text-gray-500 mb-3">
@@ -567,6 +562,7 @@ export default function App(): JSX.Element {
                 </div>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
 
